@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FoodHub😋 — Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a class="logo" href="login.html">FoodHub😋</a>
+      <div class="nav-links">
+        <a href="signup.html" class="btn btn-ghost">Sign up</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <h2>Welcome back</h2>
+      <p class="muted">Sign in to continue to FoodHub</p>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" name="email" type="email" placeholder="you@domain.com" required>
+          <small class="error" data-for="loginEmail"></small>
+        </div>
+
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <div class="password-wrap">
+            <input id="loginPassword" name="password" type="password" placeholder="Enter your password" required>
+            <button type="button" class="toggle-pw" aria-label="Show password">👁️</button>
+          </div>
+          <small class="error" data-for="loginPassword"></small>
+        </div>
+
+        <div class="field actions">
+          <button id="loginBtn" class="btn btn-primary" type="submit">Sign in</button>
+        </div>
+
+        <p class="muted center">
+          Don’t have an account?
+          <a href="signup.html">Create one</a>
+        </p>
+      </form>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
