@@ -1,70 +1,89 @@
-// Shared validation + interactivity for both pages
+// ---------------------------
+//  BASE BACKEND URL
+// ---------------------------
+const BASE_URL = "http://localhost:8080/api/auth";
 
 
-// Helpers
-function qs(sel){return document.querySelector(sel)}
-function qsa(sel){return Array.from(document.querySelectorAll(sel))}
+// ---------------------------
+//  REGISTER USER
+// ---------------------------
+document.addEventListener("DOMContentLoaded", () => {
+
+  const registerForm = document.getElementById("registerForm");
+  if (registerForm) {
+    registerForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById("regUsername").value;
+      const email = document.getElementById("regEmail").value;
+      const password = document.getElementById("regPassword").value;
+      const phoneNumber = document.getElementById("regPhone").value;
+      const address = document.getElementById("regAddress").value;
+
+      try {
+        const response = await fetch(`${BASE_URL}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username,
+            email,
+            password,
+            phoneNumber,
+            address
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.status === 201) {
+          alert("Registration successful!");
+          window.location.href = "login.html";
+        } else {
+          alert(data.message || "Registration failed");
+        }
+
+      } catch (error) {
+        alert("Error connecting to server");
+      }
+    });
+  }
 
 
-// Password toggle (works for any page)
-document.addEventListener('click', e=>{
-if(e.target.matches('.toggle-pw')){
-const wrap = e.target.closest('.field') || e.target.closest('.password-wrap')
-const input = wrap.querySelector('input')
-if(input.type === 'password'){ input.type = 'text'; e.target.textContent = '🙈' }
-else { input.type = 'password'; e.target.textContent = '👁️' }
-}
-})
+  // ---------------------------
+  //  LOGIN USER
+  // ---------------------------
+  const loginForm = document.getElementById("loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
 
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
 
-// Basic validators
-function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) }
-function isPhone(v){ return /^\+?[0-9 \-]{7,15}$/.test(v) }
+      try {
+        const response = await fetch(`${BASE_URL}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
 
+        const data = await response.json();
 
-function showError(input, msg){
-const el = document.querySelector(`.error[data-for="${input.id}"]`)
-if(el) el.textContent = msg || ''
-}
+        if (response.status === 200) {
+          alert("Login successful!");
 
+          // Store session token
+          localStorage.setItem("sessionToken", data.sessionToken);
 
-function setBtnState(formId, btnId, checkFn){
-const form = document.getElementById(formId)
-const btn = document.getElementById(btnId)
-if(!form || !btn) return
-const toggle = ()=> btn.disabled = !checkFn()
-form.addEventListener('input', toggle)
-toggle()
-}
+          window.location.href = "profile.html"; // redirect to profile/dashboard
+        } else {
+          alert(data.message || "Invalid credentials");
+        }
 
+      } catch (error) {
+        alert("Error connecting to server");
+      }
+    });
+  }
 
-// Login: validate email & password not empty
-if(document.getElementById('loginForm')){
-const form = document.getElementById('loginForm')
-const email = document.getElementById('loginEmail')
-const pw = document.getElementById('loginPassword')
-setBtnState('loginForm','loginBtn', ()=> isEmail(email.value.trim()) && pw.value.trim().length>0)
-
-
-form.addEventListener('submit', e=>{
-e.preventDefault()
-let ok = true
-if(!isEmail(email.value.trim())){ showError(email,'Enter a valid email'); ok=false } else showError(email,'')
-if(pw.value.trim().length===0){ showError(pw,'Password required'); ok=false } else showError(pw,'')
-if(!ok) return
-// Mock success — connect to backend here
-alert('Login successful (mock) — implement API call')
-form.reset()
-})
-}
-
-
-// Signup: many checks
-if(document.getElementById('signupForm')){
-const form = document.getElementById('signupForm')
-const fullname = document.getElementById('fullName')
-const email = document.getElementById('signupEmail')
-const phone = document.getElementById('phone')
-const pw = document.getElementById('signupPassword')
-const confirm = document.getElementById('confirmPassword')
-}
+});
