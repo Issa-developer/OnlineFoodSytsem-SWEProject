@@ -6,267 +6,517 @@
     <title>Menu Management - FoodHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script src="/static/realtime.js"></script>
     <style>
         :root {
             --primary-red: #e63946;
             --primary-dark: #2b2d42;
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
         }
-        
-        .sidebar {
-            background: white;
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
             min-height: 100vh;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            position: fixed;
-            width: 250px;
+            position: relative;
+            overflow-x: hidden;
         }
-        
+
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        .shape1 {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape2 {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: -50px;
+            animation-delay: 5s;
+        }
+
+        .shape3 {
+            width: 150px;
+            height: 150px;
+            bottom: -50px;
+            left: 30%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 280px;
+            z-index: 1000;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         .sidebar .logo {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
             font-weight: bold;
             color: var(--primary-red);
             font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
         }
-        
+
         .sidebar .nav-link {
-            padding: 12px 20px;
-            color: #333;
-            border-left: 3px solid transparent;
+            padding: 15px 25px;
+            color: var(--primary-dark);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            margin: 5px 15px;
+            border-radius: 8px;
+            font-weight: 500;
         }
-        
+
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background: #f8f9fa;
+            background: rgba(230, 57, 70, 0.1);
             color: var(--primary-red);
             border-left-color: var(--primary-red);
+            transform: translateX(5px);
         }
-        
+
+        .sidebar .nav-link i {
+            width: 25px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
+            margin-left: 280px;
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
         }
-        
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         .table-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
-        .btn-primary {
-            background: var(--primary-red);
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-dark), #1a1b2d);
+            color: white;
+        }
+
+        .table thead th {
             border: none;
+            padding: 15px;
+            font-weight: 600;
         }
-        
-        .status-available { color: #28a745; }
-        .status-unavailable { color: #dc3545; }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #f1f3f4;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red), #c1121f);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #c1121f, #a4161a);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-red);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-danger {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .status-available {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .status-unavailable {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .badge.bg-light {
+            background: rgba(248, 249, 250, 0.8) !important;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), #1a1b2d);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 20px 25px;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+        }
+
+        .item-image {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar .logo span,
+            .sidebar .nav-link span {
+                display: none;
+            }
+
+            .sidebar .nav-link {
+                text-align: center;
+                padding: 15px 10px;
+            }
+
+            .sidebar .nav-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-utensils"></i> FoodHub Admin
-        </div>
-        <nav class="nav flex-column">
-            <a class="nav-link" href="/admin/dashboard">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a class="nav-link active" href="/admin/menu">
-                <i class="fas fa-utensils"></i> Menu Management
-            </a>
-            <a class="nav-link" href="/admin/orders">
-                <i class="fas fa-shopping-bag"></i> Orders
-            </a>
-            <a class="nav-link" href="/admin/users">
-                <i class="fas fa-users"></i> Customers
-            </a>
-        </nav>
-    </div>
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Menu Management</h2>
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <i class="fas fa-utensils"></i> FoodHub Admin
+    </div>
+    <nav class="nav flex-column">
+        <a class="nav-link" href="/admin/dashboard">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        <a class="nav-link active" href="/admin/menu">
+            <i class="fas fa-utensils"></i> <span>Menu Management</span>
+        </a>
+        <a class="nav-link" href="/admin/orders">
+            <i class="fas fa-shopping-bag"></i> <span>Orders</span>
+        </a>
+        <a class="nav-link" href="/admin/users">
+            <i class="fas fa-users"></i> <span>Customers</span>
+        </a>
+        <a class="nav-link" href="/logout">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1" style="color: var(--primary-dark);">Menu Management</h2>
+                <p class="text-muted mb-0">Manage your restaurant menu items and categories</p>
+            </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                <i class="fas fa-plus"></i> Add New Item
+                <i class="fas fa-plus me-2"></i> Add New Item
             </button>
         </div>
+    </div>
 
-        <!-- Menu Items Table -->
-        <div class="table-card">
-            <div class="p-3 border-bottom">
-                <h5 class="mb-0">Menu Items</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="item : ${items}">
-                            <td>
-                                <div style="width: 50px; height: 50px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-utensils text-muted"></i>
-                                </div>
-                            </td>
-                            <td th:text="${item.name}">Classic Burger</td>
-                            <td>
-                                <span class="badge bg-light text-dark" th:text="${item.category.name}">Burgers</span>
-                            </td>
-                            <td th:text="'$' + ${#numbers.formatDecimal(item.price, 1, 2)}">$8.99</td>
-                            <td th:text="${item.quantity}">50</td>
-                            <td>
+    <!-- Menu Items Table -->
+    <div class="table-card">
+        <div class="p-4 border-bottom">
+            <h5 class="mb-0" style="color: var(--primary-dark);">
+                <i class="fas fa-utensils me-2"></i>Menu Items
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td>
+                        <div class="item-image">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                    </td>
+                    <td class="fw-bold" th:text="${item.name}">Classic Burger</td>
+                    <td>
+                        <span class="badge bg-light text-dark" th:text="${item.category.name}">Burgers</span>
+                    </td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(item.price, 1, 2)}">$8.99</td>
+                    <td>
+                                <span th:text="${item.quantity}"
+                                      th:class="${item.quantity < 10 ? 'text-danger fw-bold' : 'text-dark'}">50</span>
+                    </td>
+                    <td>
                                 <span th:if="${item.available}" class="status-available">
-                                    <i class="fas fa-check-circle"></i> Available
+                                    <i class="fas fa-check-circle me-1"></i> Available
                                 </span>
-                                <span th:unless="${item.available}" class="status-unavailable">
-                                    <i class="fas fa-times-circle"></i> Unavailable
+                        <span th:unless="${item.available}" class="status-unavailable">
+                                    <i class="fas fa-times-circle me-1"></i> Unavailable
                                 </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#editItemModal"
-                                        th:attr="data-id=${item.id},
-                                                data-name=${item.name},
-                                                data-category=${item.category.id},
-                                                data-price=${item.price},
-                                                data-quantity=${item.quantity},
-                                                data-available=${item.available}">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger"
-                                        th:attr="data-id=${item.id}">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editItemModal"
+                                    th:attr="data-id=${item.id},
+                                                    data-name=${item.name},
+                                                    data-category=${item.category.id},
+                                                    data-price=${item.price},
+                                                    data-quantity=${item.quantity},
+                                                    data-available=${item.available}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger"
+                                    th:attr="data-id=${item.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Menu Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/admin/menu/items/add}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" name="category.id" required>
+                            <option value="">Select Category</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}"
+                                    th:text="${cat.name}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Price</label>
+                        <input type="number" class="form-control" name="price" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock Quantity</label>
+                        <input type="number" class="form-control" name="quantity" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Availability</label>
+                        <select class="form-select" name="available">
+                            <option value="true">Available</option>
+                            <option value="false">Unavailable</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Item Image</label>
+                        <input type="file" class="form-control" name="image" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="fas fa-plus me-2"></i>Add Item
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Add Item Modal -->
-    <div class="modal fade" id="addItemModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Menu Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form th:action="@{/admin/menu/items/add}" method="post" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label class="form-label">Item Name</label>
-                            <input type="text" class="form-control" name="name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" name="category.id" required>
-                                <option value="">Select Category</option>
-                                <option th:each="cat : ${categories}" 
-                                        th:value="${cat.id}" 
-                                        th:text="${cat.name}"></option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Price</label>
-                            <input type="number" class="form-control" name="price" step="0.01" min="0" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Stock Quantity</label>
-                            <input type="number" class="form-control" name="quantity" min="0" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Availability</label>
-                            <select class="form-select" name="available">
-                                <option value="true">Available</option>
-                                <option value="false">Unavailable</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Item Image</label>
-                            <input type="file" class="form-control" name="image" accept="image/*">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Add Item</button>
-                    </form>
-                </div>
+<!-- Edit Item Modal -->
+<div class="modal fade" id="editItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Menu Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/admin/menu/items/edit}" method="post">
+                    <input type="hidden" name="id" id="editItemId">
+                    <div class="mb-3">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="name" id="editItemName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" name="category.id" id="editItemCategory" required>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}"
+                                    th:text="${cat.name}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Price</label>
+                        <input type="number" class="form-control" name="price" id="editItemPrice" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock Quantity</label>
+                        <input type="number" class="form-control" name="quantity" id="editItemQuantity" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Availability</label>
+                        <select class="form-select" name="available" id="editItemAvailable">
+                            <option value="true">Available</option>
+                            <option value="false">Unavailable</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="fas fa-save me-2"></i>Update Item
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Edit Item Modal -->
-    <div class="modal fade" id="editItemModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Menu Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form th:action="@{/admin/menu/items/edit}" method="post">
-                        <input type="hidden" name="id" id="editItemId">
-                        <div class="mb-3">
-                            <label class="form-label">Item Name</label>
-                            <input type="text" class="form-control" name="name" id="editItemName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" name="category.id" id="editItemCategory" required>
-                                <option th:each="cat : ${categories}" 
-                                        th:value="${cat.id}" 
-                                        th:text="${cat.name}"></option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Price</label>
-                            <input type="number" class="form-control" name="price" id="editItemPrice" step="0.01" min="0" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Stock Quantity</label>
-                            <input type="number" class="form-control" name="quantity" id="editItemQuantity" min="0" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Availability</label>
-                            <select class="form-select" name="available" id="editItemAvailable">
-                                <option value="true">Available</option>
-                                <option value="false">Unavailable</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Update Item</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Fill edit modal with item data
-        document.addEventListener('DOMContentLoaded', function() {
-            var editModal = document.getElementById('editItemModal');
-            editModal.addEventListener('show.bs.modal', function (event) {
-                var button = event.relatedTarget;
-                document.getElementById('editItemId').value = button.getAttribute('data-id');
-                document.getElementById('editItemName').value = button.getAttribute('data-name');
-                document.getElementById('editItemCategory').value = button.getAttribute('data-category');
-                document.getElementById('editItemPrice').value = button.getAttribute('data-price');
-                document.getElementById('editItemQuantity').value = button.getAttribute('data-quantity');
-                document.getElementById('editItemAvailable').value = button.getAttribute('data-available');
-            });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var editModal = document.getElementById('editItemModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            document.getElementById('editItemId').value = button.getAttribute('data-id');
+            document.getElementById('editItemName').value = button.getAttribute('data-name');
+            document.getElementById('editItemCategory').value = button.getAttribute('data-category');
+            document.getElementById('editItemPrice').value = button.getAttribute('data-price');
+            document.getElementById('editItemQuantity').value = button.getAttribute('data-quantity');
+            document.getElementById('editItemAvailable').value = button.getAttribute('data-available');
         });
-    </script>
+    });
+</script>
 </body>
 </html>

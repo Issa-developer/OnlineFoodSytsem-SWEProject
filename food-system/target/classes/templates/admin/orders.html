@@ -6,383 +6,644 @@
     <title>Order Management - FoodHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script src="/static/realtime.js"></script>
     <style>
         :root {
             --primary-red: #e63946;
             --primary-dark: #2b2d42;
-            --primary-light: #f8f9fa;
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .sidebar {
-            background: white;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
             min-height: 100vh;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            position: fixed;
-            width: 250px;
+            position: relative;
+            overflow-x: hidden;
         }
-        
+
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        .shape1 {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape2 {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: -50px;
+            animation-delay: 5s;
+        }
+
+        .shape3 {
+            width: 150px;
+            height: 150px;
+            bottom: -50px;
+            left: 30%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 280px;
+            z-index: 1000;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         .sidebar .logo {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
             font-weight: bold;
             color: var(--primary-red);
             font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
         }
-        
+
         .sidebar .nav-link {
-            padding: 12px 20px;
-            color: #333;
-            border-left: 3px solid transparent;
+            padding: 15px 25px;
+            color: var(--primary-dark);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            margin: 5px 15px;
+            border-radius: 8px;
+            font-weight: 500;
         }
-        
+
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background: #f8f9fa;
+            background: rgba(230, 57, 70, 0.1);
             color: var(--primary-red);
             border-left-color: var(--primary-red);
+            transform: translateX(5px);
         }
-        
+
+        .sidebar .nav-link i {
+            width: 25px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
+            margin-left: 280px;
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
         }
-        
-        .table-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
-        .table thead {
-            background: var(--primary-dark);
-            color: white;
-        }
-        
-        .badge-pending { background: #ffc107; color: black; }
-        .badge-preparing { background: #17a2b8; color: white; }
-        .badge-ready { background: #28a745; color: white; }
-        .badge-delivered { background: #6c757d; color: white; }
-        .badge-cancelled { background: #dc3545; color: white; }
-        
-        .btn-primary {
-            background: var(--primary-red);
-            border: none;
-        }
-        
-        .order-stage {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .order-stage h6 {
-            color: var(--primary-dark);
-            margin-bottom: 10px;
-        }
-        
-        .order-item {
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            margin-bottom: 8px;
-            background: #f8f9fa;
-        }
-        
+
         .stats-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
         }
-        
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
         .stats-number {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: bold;
             color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+
+        .table-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-dark), #1a1b2d);
+            color: white;
+        }
+
+        .table thead th {
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #f1f3f4;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red), #c1121f);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #c1121f, #a4161a);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-red);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            color: #6c757d;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-danger {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .badge-pending {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: black;
+        }
+        .badge-preparing {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+        .badge-ready {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+        .badge-delivered {
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            color: white;
+        }
+        .badge-cancelled {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .order-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 100%;
+        }
+
+        .order-stage h6 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .order-stage h6 i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+        }
+
+        .order-item {
+            padding: 15px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            background: rgba(248, 249, 250, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .order-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), #1a1b2d);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 20px 25px;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar .logo span,
+            .sidebar .nav-link span {
+                display: none;
+            }
+
+            .sidebar .nav-link {
+                text-align: center;
+                padding: 15px 10px;
+            }
+
+            .sidebar .nav-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-utensils"></i> FoodHub Admin
-        </div>
-        <nav class="nav flex-column">
-            <a class="nav-link" href="/admin/dashboard">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a class="nav-link" href="/admin/menu">
-                <i class="fas fa-utensils"></i> Menu Management
-            </a>
-            <a class="nav-link active" href="/admin/orders">
-                <i class="fas fa-shopping-bag"></i> Orders
-            </a>
-            <a class="nav-link" href="/admin/users">
-                <i class="fas fa-users"></i> Customers
-            </a>
-            <a class="nav-link" href="/logout">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </nav>
-    </div>
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Order Management</h2>
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <i class="fas fa-utensils"></i> FoodHub Admin
+    </div>
+    <nav class="nav flex-column">
+        <a class="nav-link" href="/admin/dashboard">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="/admin/menu">
+            <i class="fas fa-utensils"></i> <span>Menu Management</span>
+        </a>
+        <a class="nav-link active" href="/admin/orders">
+            <i class="fas fa-shopping-bag"></i> <span>Orders</span>
+        </a>
+        <a class="nav-link" href="/admin/users">
+            <i class="fas fa-users"></i> <span>Customers</span>
+        </a>
+        <a class="nav-link" href="/logout">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1" style="color: var(--primary-dark);">Order Management</h2>
+                <p class="text-muted mb-0">Manage and track all customer orders in real-time</p>
+            </div>
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-secondary">
-                    <i class="fas fa-download"></i> Export
+                    <i class="fas fa-download me-2"></i> Export
                 </button>
                 <button class="btn btn-primary" onclick="location.reload()">
-                    <i class="fas fa-sync"></i> Refresh
+                    <i class="fas fa-sync me-2"></i> Refresh
                 </button>
             </div>
         </div>
+    </div>
 
-        <!-- Order Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-number" th:text="${totalOrders}">0</div>
-                    <div class="text-muted">Total Orders</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-number" th:text="${pendingOrders}">0</div>
-                    <div class="text-muted">Pending</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-number" th:text="${preparingOrders}">0</div>
-                    <div class="text-muted">Preparing</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-number" th:text="${readyOrders}">0</div>
-                    <div class="text-muted">Ready</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-number" th:text="${deliveredOrders}">0</div>
-                    <div class="text-muted">Delivered</div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-number">$<span th:text="${#numbers.formatDecimal(todayRevenue, 0, 0)}">0</span></div>
-                    <div class="text-muted">Today's Revenue</div>
-                </div>
+    <!-- Order Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${totalOrders}">0</div>
+                <div class="text-muted">Total Orders</div>
             </div>
         </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${pendingOrders}">0</div>
+                <div class="text-muted">Pending</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${preparingOrders}">0</div>
+                <div class="text-muted">Preparing</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${readyOrders}">0</div>
+                <div class="text-muted">Ready</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${deliveredOrders}">0</div>
+                <div class="text-muted">Delivered</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-number">$<span th:text="${#numbers.formatDecimal(todayRevenue, 0, 0)}">0</span></div>
+                <div class="text-muted">Today's Revenue</div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Order Pipeline -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="order-stage">
-                    <h6><i class="fas fa-clock text-warning"></i> Pending</h6>
-                    <div id="pendingOrders">
-                        <div th:each="order : ${orders}" th:if="${order.status == 'Pending'}">
-                            <div class="order-item">
-                                <div class="fw-bold" th:text="'#' + ${order.id}">#1001</div>
-                                <div class="small" th:text="${order.user.username}">John Doe</div>
-                                <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$25.00</div>
-                                <button class="btn btn-sm btn-primary mt-1 w-100" 
-                                        th:onclick="'updateOrderStatus(' + ${order.id} + ', \\'Preparing\\')'">
-                                    Start Preparing
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="order-stage">
-                    <h6><i class="fas fa-utensils text-info"></i> Preparing</h6>
-                    <div id="preparingOrders">
-                        <div th:each="order : ${orders}" th:if="${order.status == 'Preparing'}">
-                            <div class="order-item">
-                                <div class="fw-bold" th:text="'#' + ${order.id}">#1002</div>
-                                <div class="small" th:text="${order.user.username}">Jane Smith</div>
-                                <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$18.50</div>
-                                <button class="btn btn-sm btn-success mt-1 w-100"
-                                        th:onclick="'updateOrderStatus(' + ${order.id} + ', \\'Ready\\')'">
-                                    Mark Ready
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="order-stage">
-                    <h6><i class="fas fa-check-circle text-success"></i> Ready</h6>
-                    <div id="readyOrders">
-                        <div th:each="order : ${orders}" th:if="${order.status == 'Ready'}">
-                            <div class="order-item">
-                                <div class="fw-bold" th:text="'#' + ${order.id}">#1003</div>
-                                <div class="small" th:text="${order.user.username}">Mike Johnson</div>
-                                <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$32.75</div>
-                                <button class="btn btn-sm btn-info mt-1 w-100"
-                                        th:onclick="'updateOrderStatus(' + ${order.id} + ', \\'Delivered\\')'">
-                                    Mark Delivered
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="order-stage">
-                    <h6><i class="fas fa-truck text-secondary"></i> Delivered</h6>
-                    <div id="deliveredOrders">
-                        <div th:each="order : ${orders}" th:if="${order.status == 'Delivered'}">
-                            <div class="order-item">
-                                <div class="fw-bold" th:text="'#' + ${order.id}">#1003</div>
-                                <div class="small" th:text="${order.user.username}">Mike Johnson</div>
-                                <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$15.00</div>
-                                <span class="badge badge-delivered mt-1">Completed</span>
-                            </div>
+    <!-- Order Pipeline -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-lg-6 mb-4">
+            <div class="order-stage">
+                <h6><i class="fas fa-clock text-warning"></i> Pending</h6>
+                <div id="pendingOrders">
+                    <div th:each="order : ${orders}" th:if="${order.status == 'Pending'}">
+                        <div class="order-item">
+                            <div class="fw-bold" th:text="'#' + ${order.id}">#1001</div>
+                            <div class="small" th:text="${order.user.username}">John Doe</div>
+                            <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$25.00</div>
+                            <button class="btn btn-sm btn-primary mt-2 w-100"
+                                    th:onclick="'updateOrderStatus(' + ${order.id} + ', \\'Preparing')'">
+                                Start Preparing
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- All Orders Table -->
-        <div class="table-card">
-            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">All Orders</h5>
-                <div class="d-flex gap-2">
-                    <select class="form-select form-select-sm" style="width: auto;" onchange="filterOrders(this.value)">
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="preparing">Preparing</option>
-                        <option value="ready">Ready</option>
-                        <option value="delivered">Delivered</option>
-                    </select>
-                    <input type="date" class="form-control form-control-sm" style="width: auto;" onchange="filterByDate(this.value)">
+        <div class="col-xl-3 col-lg-6 mb-4">
+            <div class="order-stage">
+                <h6><i class="fas fa-utensils text-info"></i> Preparing</h6>
+                <div id="preparingOrders">
+                    <div th:each="order : ${orders}" th:if="${order.status == 'Preparing'}">
+                        <div class="order-item">
+                            <div class="fw-bold" th:text="'#' + ${order.id}">#1002</div>
+                            <div class="small" th:text="${order.user.username}">Jane Smith</div>
+                            <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$18.50</div>
+                            <button class="btn btn-sm btn-success mt-2 w-100"
+                                    th:onclick="'updateOrderStatus(' + ${order.id} + ', \\'Ready')'">
+                                Mark Ready
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="order : ${orders}">
-                            <td th:text="'#' + ${order.id}" class="fw-bold">#1001</td>
-                            <td th:text="${order.username}">John Doe</td>
-                            <td>
-                                <span class="badge bg-light text-dark">3 items</span>
-                            </td>
-                            <td th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$25.00</td>
-                            <td>
-                                <span th:classappend="'badge badge-' + ${order.status.toLowerCase()}" 
+        </div>
+        <div class="col-xl-3 col-lg-6 mb-4">
+            <div class="order-stage">
+                <h6><i class="fas fa-check-circle text-success"></i> Ready</h6>
+                <div id="readyOrders">
+                    <div th:each="order : ${orders}" th:if="${order.status == 'Ready'}">
+                        <div class="order-item">
+                            <div class="fw-bold" th:text="'#' + ${order.id}">#1003</div>
+                            <div class="small" th:text="${order.user.username}">Mike Johnson</div>
+                            <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$32.75</div>
+                            <button class="btn btn-sm btn-info mt-2 w-100"
+                                    th:onclick="'updateOrderStatus(' + ${order.id} + ', \\'Delivered')'">
+                                Mark Delivered
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 mb-4">
+            <div class="order-stage">
+                <h6><i class="fas fa-truck text-secondary"></i> Delivered</h6>
+                <div id="deliveredOrders">
+                    <div th:each="order : ${orders}" th:if="${order.status == 'Delivered'}">
+                        <div class="order-item">
+                            <div class="fw-bold" th:text="'#' + ${order.id}">#1004</div>
+                            <div class="small" th:text="${order.user.username}">Mike Johnson</div>
+                            <div class="small text-muted" th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$15.00</div>
+                            <span class="badge badge-delivered mt-2 w-100 text-center">Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Orders Table -->
+    <div class="table-card">
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" style="color: var(--primary-dark);">
+                <i class="fas fa-list me-2"></i>All Orders
+            </h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" style="width: auto;" onchange="filterOrders(this.value)">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="preparing">Preparing</option>
+                    <option value="ready">Ready</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+                <input type="date" class="form-control form-control-sm" style="width: auto;" onchange="filterByDate(this.value)">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td class="fw-bold" th:text="'#' + ${order.id}">#1001</td>
+                    <td th:text="${order.user.username}">John Doe</td>
+                    <td>
+                        <span class="badge bg-light text-dark">3 items</span>
+                    </td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$25.00</td>
+                    <td>
+                                <span th:classappend="'badge badge-' + ${order.status.toLowerCase()}"
                                       th:text="${order.status}">Pending</span>
-                            </td>
-                            <td th:text="${#dates.format(order.date, 'MMM d, yyyy')}">Nov 22, 2023</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" 
-                                        th:onclick="'viewOrderDetails(' + ${order.id} + ')'">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" 
-                                        th:onclick="'cancelOrder(' + ${order.id} + ')'"
-                                        th:if="${order.status == 'Pending' or order.status == 'Preparing'}">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>
-                            </td>
+                    </td>
+                    <td th:text="${#dates.format(order.date, 'MMM d, yyyy')}">Nov 22, 2023</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary"
+                                    th:onclick="'viewOrderDetails(' + ${order.id} + ')'">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-danger"
+                                    th:onclick="'cancelOrder(' + ${order.id} + ')'"
+                                    th:if="${order.status == 'Pending' or order.status == 'Preparing'}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details - #<span id="orderDetailId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Customer Information</h6>
+                        <p><strong>Name:</strong> <span id="customerName"></span></p>
+                        <p><strong>Contact:</strong> <span id="customerContact"></span></p>
+                        <p><strong>Delivery Address:</strong> <span id="deliveryAddress"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Order Information</h6>
+                        <p><strong>Order Date:</strong> <span id="orderDate"></span></p>
+                        <p><strong>Status:</strong> <span id="orderStatus" class="badge"></span></p>
+                        <p><strong>Total Amount:</strong> $<span id="orderTotal"></span></p>
+                    </div>
+                </div>
+                <hr>
+                <h6>Order Items</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
                         </tr>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody id="orderItems">
+                        <!-- Order items will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="updateStatusBtn">Update Status</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Order Details Modal -->
-    <div class="modal fade" id="orderDetailsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Order Details - #<span id="orderDetailId"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Customer Information</h6>
-                            <p><strong>Name:</strong> <span id="customerName"></span></p>
-                            <p><strong>Contact:</strong> <span id="customerContact"></span></p>
-                            <p><strong>Delivery Address:</strong> <span id="deliveryAddress"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Order Information</h6>
-                            <p><strong>Order Date:</strong> <span id="orderDate"></span></p>
-                            <p><strong>Status:</strong> <span id="orderStatus" class="badge"></span></p>
-                            <p><strong>Total Amount:</strong> $<span id="orderTotal"></span></p>
-                        </div>
-                    </div>
-                    <hr>
-                    <h6>Order Items</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orderItems">
-                                <!-- Order items will be populated here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="updateStatusBtn">Update Status</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function updateOrderStatus(orderId, newStatus) {
-            if (confirm('Update order status to ' + newStatus + '?')) {
-                fetch('/admin/orders/' + orderId + '/status?status=' + newStatus, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function updateOrderStatus(orderId, newStatus) {
+        if (confirm('Update order status to ' + newStatus + '?')) {
+            fetch('/admin/orders/' + orderId + '/status?status=' + newStatus, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -393,45 +654,45 @@
                     console.error('Error:', error);
                     alert('Error updating order status');
                 });
+        }
+    }
+
+    function viewOrderDetails(orderId) {
+        // In a real app, you'd fetch order details from the server
+        document.getElementById('orderDetailId').textContent = orderId;
+        document.getElementById('customerName').textContent = 'John Doe';
+        document.getElementById('customerContact').textContent = 'john@email.com';
+        document.getElementById('deliveryAddress').textContent = '123 Main St, City, State';
+        document.getElementById('orderDate').textContent = new Date().toLocaleDateString();
+        document.getElementById('orderTotal').textContent = '25.00';
+
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+        modal.show();
+    }
+
+    function cancelOrder(orderId) {
+        if (confirm('Are you sure you want to cancel this order?')) {
+            updateOrderStatus(orderId, 'Cancelled');
+        }
+    }
+
+    function filterOrders(status) {
+        // Simple client-side filtering
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const rowStatus = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
+            if (status === 'all' || rowStatus === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
-        }
-        
-        function viewOrderDetails(orderId) {
-            // In a real app, you'd fetch order details from the server
-            document.getElementById('orderDetailId').textContent = orderId;
-            document.getElementById('customerName').textContent = 'John Doe';
-            document.getElementById('customerContact').textContent = 'john@email.com';
-            document.getElementById('deliveryAddress').textContent = '123 Main St, City, State';
-            document.getElementById('orderDate').textContent = new Date().toLocaleDateString();
-            document.getElementById('orderTotal').textContent = '25.00';
-            
-            const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-            modal.show();
-        }
-        
-        function cancelOrder(orderId) {
-            if (confirm('Are you sure you want to cancel this order?')) {
-                updateOrderStatus(orderId, 'Cancelled');
-            }
-        }
-        
-        function filterOrders(status) {
-            // Simple client-side filtering
-            const rows = document.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const rowStatus = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-                if (status === 'all' || rowStatus === status) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-        
-        function filterByDate(date) {
-            // Date filtering logic would go here
-            console.log('Filter by date:', date);
-        }
-    </script>
+        });
+    }
+
+    function filterByDate(date) {
+        // Date filtering logic would go here
+        console.log('Filter by date:', date);
+    }
+</script>
 </body>
 </html>
