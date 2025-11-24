@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - FoodHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #e63946;
+            --primary-dark: #2b2d42;
+            --primary-light: #f8f9fa;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background: white;
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 250px;
+        }
+        
+        .sidebar .logo {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: var(--primary-red);
+            font-size: 1.5rem;
+        }
+        
+        .sidebar .nav-link {
+            padding: 12px 20px;
+            color: #333;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: #f8f9fa;
+            color: var(--primary-red);
+            border-left-color: var(--primary-red);
+        }
+        
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary-red);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table thead {
+            background: var(--primary-dark);
+            color: white;
+        }
+        
+        .badge-pending { background: var(--warning); color: black; }
+        .badge-preparing { background: #17a2b8; color: white; }
+        .badge-ready { background: var(--success); color: white; }
+        .badge-delivered { background: #6c757d; color: white; }
+        
+        .btn-primary {
+            background: var(--primary-red);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: #c1121f;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-utensils"></i> FoodHub Admin
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="/admin/dashboard">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link" href="/admin/menu">
+                <i class="fas fa-utensils"></i> Menu Management
+            </a>
+            <a class="nav-link" href="/admin/orders">
+                <i class="fas fa-shopping-bag"></i> Orders
+            </a>
+            <a class="nav-link" href="/admin/users">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a class="nav-link" href="/">
+                <i class="fas fa-store"></i> View Store
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Dashboard Overview</h2>
+            <div class="text-muted">
+                <i class="fas fa-calendar"></i> <span th:text="${#dates.format(#dates.createNow(), 'MMMM d, yyyy')}"></span>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${totalOrders}">0</div>
+                    <div class="stat-label">Total Orders</div>
+                    <small class="text-success"><i class="fas fa-arrow-up"></i> 12% from yesterday</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">$<span th:text="${#numbers.formatDecimal(todayRevenue, 0, 0)}">0</span></div>
+                    <div class="stat-label">Today's Revenue</div>
+                    <small class="text-success"><i class="fas fa-arrow-up"></i> 8% from yesterday</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${activeOrders}">0</div>
+                    <div class="stat-label">Active Orders</div>
+                    <small class="text-warning"><i class="fas fa-clock"></i> Need attention</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${totalCustomers}">0</div>
+                    <div class="stat-label">Total Customers</div>
+                    <small class="text-success"><i class="fas fa-arrow-up"></i> 5 new today</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders & Quick Stats -->
+        <div class="row">
+            <!-- Recent Orders -->
+            <div class="col-md-8">
+                <div class="table-card">
+                    <div class="p-3 border-bottom">
+                        <h5 class="mb-0">Recent Orders</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                    <th>Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(recentOrders)}">
+                                    <td colspan="6" class="text-center">No recent orders found.</td>
+                                </tr>
+                                <tr th:each="order : ${recentOrders}">
+                                    <td th:text="'#' + ${order.id}">#1001</td>
+                                    <td th:text="${order.user.username}">John Doe</td>
+                                    <td>
+                                        <span th:classappend="'badge badge-' + ${order.status}" 
+                                              th:text="${order.status}">Pending</span>
+                                    </td>
+                                    <td th:text="'$' + ${#numbers.formatDecimal(order.total, 1, 2)}">$25.00</td>
+                                    <td th:text="${#dates.format(order.date, 'HH:mm')}">14:30</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">View</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="col-md-4">
+                <div class="table-card mb-4">
+                <div class="table-card mb-4">
+                    <div class="p-3 border-bottom">
+                        <h5 class="mb-0">Order Status Chart</h5>
+                    </div>
+                    <div class="p-3">
+                        <canvas id="orderStatusChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('orderStatusChart').getContext('2d');
+        var orderStatusChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Pending', 'Preparing', 'Ready', 'Delivered'],
+                datasets: [{
+                    label: 'Order Status',
+                    data: [
+                        [[${pendingOrders}]],
+                        [[${preparingOrders}]],
+                        [[${readyOrders}]],
+                        [[${deliveredOrders}]]
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(23, 162, 184, 0.7)',
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(108, 117, 125, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(108, 117, 125, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+    </script>
+                    <div class="p-3 border-bottom">
+                        <h5 class="mb-0">Order Status</h5>
+                    </div>
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Pending</span>
+                            <span class="font-weight-bold" th:text="${pendingOrders}">12</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Preparing</span>
+                            <span class="font-weight-bold" th:text="${preparingOrders}">8</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Ready</span>
+                            <span class="font-weight-bold" th:text="${readyOrders}">5</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Delivered</span>
+                            <span class="font-weight-bold" th:text="${deliveredOrders}">23</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular Items -->
+                <div class="table-card">
+                    <div class="p-3 border-bottom">
+                        <h5 class="mb-0">Popular Items</h5>
+                    </div>
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Classic Burger</span>
+                                <span class="text-muted">42 orders</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Margherita Pizza</span>
+                                <span class="text-muted">38 orders</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" style="width: 76%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Caesar Salad</span>
+                                <span class="text-muted">35 orders</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
