@@ -52,21 +52,17 @@ public class AdminController {
         System.out.println("=== ADMIN DASHBOARD LOADED ===");
 
         try {
-            // Get all data needed for the dashboard
             List<Order> allOrders = orderService.getAllOrders();
             List<User> allUsers = userService.getAllUsers();
 
-            // Basic statistics
             model.addAttribute("totalOrders", allOrders.size());
             model.addAttribute("todayRevenue", calculateTodayRevenue(allOrders));
             model.addAttribute("activeOrders", calculateActiveOrders(allOrders));
             model.addAttribute("totalCustomers", allUsers.size());
 
-            // Recent orders (last 5 orders)
             List<Order> recentOrders = getRecentOrders(allOrders, 5);
             model.addAttribute("recentOrders", recentOrders);
 
-            // Order status counts for the chart
             model.addAttribute("pendingOrders", countOrdersByStatus(allOrders, "PENDING"));
             model.addAttribute("preparingOrders", countOrdersByStatus(allOrders, "PREPARING"));
             model.addAttribute("readyOrders", countOrdersByStatus(allOrders, "READY"));
@@ -79,40 +75,57 @@ public class AdminController {
 
         } catch (Exception e) {
             System.out.println("Error loading dashboard data: " + e.getMessage());
-            // Fallback to dummy data if services fail
             setupDummyData(model);
         }
 
         return "admin/dashboard";
     }
 
-    // Helper methods for dashboard data
+    // Helper methods for dashboard data with null safety
     private double calculateTodayRevenue(List<Order> orders) {
-        return orders.stream()
-                .filter(order -> order.getDate().equals(LocalDate.now()))
-                .mapToDouble(Order::getTotal)
-                .sum();
+        double sum = 0.0;
+        if (orders != null) {
+            for (Order order : orders) {
+                if (order != null && order.getDate() != null && LocalDate.now().equals(order.getDate())) {
+                    Double total = order.getTotal();
+                    sum += (total != null ? total : 0.0);
+                }
+            }
+        }
+        return sum;
     }
 
     private long calculateActiveOrders(List<Order> orders) {
-        return orders.stream()
-                .filter(order -> !order.getStatus().equals("DELIVERED"))
-                .count();
+        long count = 0;
+        if (orders != null) {
+            for (Order order : orders) {
+                if (order != null && order.getStatus() != null && !order.getStatus().equals("DELIVERED")) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private List<Order> getRecentOrders(List<Order> orders, int count) {
+        if (orders == null || orders.isEmpty()) return new ArrayList<>();
         int size = orders.size();
         int start = Math.max(0, size - count);
         return new ArrayList<>(orders.subList(start, size));
     }
 
     private long countOrdersByStatus(List<Order> orders, String status) {
-        return orders.stream()
-                .filter(order -> order.getStatus().equals(status))
-                .count();
+        long count = 0;
+        if (orders != null && status != null) {
+            for (Order order : orders) {
+                if (order != null && status.equals(order.getStatus())) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
-    // Fallback dummy data
     private void setupDummyData(Model model) {
         System.out.println("Setting up dummy data for dashboard");
 
@@ -125,7 +138,6 @@ public class AdminController {
         model.addAttribute("readyOrders", 1);
         model.addAttribute("deliveredOrders", 150);
 
-        // Create dummy recent orders
         List<Order> dummyOrders = new ArrayList<>();
 
         Order order1 = new Order();
@@ -187,13 +199,11 @@ public class AdminController {
         try {
             model.addAttribute("items", menuService.getAllMenuItems());
             model.addAttribute("categories", categoryService.getAllCategories());
-            model.addAttribute("newItem", new MenuItem()); // For add form
+            model.addAttribute("newItem", new MenuItem());
 
-            // AI-powered menu analytics
             Map<String, Object> menuAnalytics = aiService.getMenuAnalytics();
             model.addAllAttributes(menuAnalytics);
 
-            // Performance metrics
             Map<String, ?> performanceData = analyticsService.getMenuPerformance();
             model.addAllAttributes(performanceData);
 
@@ -209,7 +219,6 @@ public class AdminController {
         try {
             menuService.saveMenuItem(item);
 
-            // Send real-time update
             Map<String, Object> update = new HashMap<>();
             update.put("type", "ITEM_ADDED");
             update.put("item", item);
@@ -226,7 +235,6 @@ public class AdminController {
         try {
             menuService.updateMenuItem(item);
 
-            // Send real-time update
             Map<String, Object> update = new HashMap<>();
             update.put("type", "ITEM_UPDATED");
             update.put("item", item);
@@ -243,7 +251,6 @@ public class AdminController {
         try {
             menuService.deleteMenuItem(id);
 
-            // Send real-time update
             Map<String, Object> update = new HashMap<>();
             update.put("type", "ITEM_DELETED");
             update.put("itemId", id);
@@ -255,7 +262,6 @@ public class AdminController {
         }
     }
 
-    // AI-Powered Menu Optimization
     @PostMapping("/menu/ai/optimize")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> optimizeMenuWithAI() {
@@ -336,21 +342,23 @@ public class AdminController {
     public String orderManagement(Model model) {
         try {
             List<Order> allOrders = orderService.getAllOrders();
-            List<User> allUsers = userService.getAllUsers();
-            Map<User, List<Order>> ordersByUser = new HashMap<>();
-            for (User user : allUsers) {
-                List<Order> userOrders = allOrders.stream()
-                        .filter(o -> o.getUser() != null && o.getUser().getId().equals(user.getId()))
-                        .toList();
-                ordersByUser.put(user, userOrders);
+            // Filter only pending, preparing, and ready orders
+            List<Order> filteredOrders = new ArrayList<>();
+            if (allOrders != null) {
+                for (Order order : allOrders) {
+                    if (order != null && order.getStatus() != null) {
+                        String status = order.getStatus();
+                        if (status.equals("PENDING") || status.equals("PREPARING") || status.equals("READY")) {
+                            filteredOrders.add(order);
+                        }
+                    }
+                }
             }
-            model.addAttribute("ordersByUser", ordersByUser);
+            model.addAttribute("orders", filteredOrders);
 
-            // Real-time order analytics
             Map<String, ?> orderAnalytics = analyticsService.getOrderAnalytics();
             model.addAllAttributes(orderAnalytics);
 
-            // Predictive insights
             Map<String, ?> predictions = aiService.getOrderPredictions();
             model.addAllAttributes(predictions);
 
@@ -379,7 +387,6 @@ public class AdminController {
         try {
             Order order = orderService.updateOrderStatus(id, status);
 
-            // Send real-time update to all connected clients
             Map<String, Object> update = Map.of(
                     "type", "ORDER_STATUS_UPDATE",
                     "orderId", id,
@@ -410,11 +417,9 @@ public class AdminController {
         try {
             model.addAttribute("users", userService.getAllUsers());
 
-            // Customer intelligence data
             Map<String, ?> customerAnalytics = analyticsService.getCustomerAnalytics();
             model.addAllAttributes(customerAnalytics);
 
-            // Segmentation data
             Map<String, ?> segmentation = new HashMap<>(aiService.getCustomerSegmentation());
             model.addAllAttributes(segmentation);
 
@@ -526,6 +531,7 @@ public class AdminController {
     // ========== ERROR HANDLING ==========
     @ExceptionHandler(Exception.class)
     public String handleException(Exception e, Model model) {
+        e.printStackTrace();
         model.addAttribute("error", e.getMessage());
         return "admin/error";
     }
