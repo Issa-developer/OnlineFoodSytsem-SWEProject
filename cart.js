@@ -1,4 +1,3 @@
-
 const CONFIG = {
     DELIVERY_FEE: 150,
     TAX_RATE: 0.16,
@@ -38,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCartFromStorage();
     updateCartDisplay();
     attachEventListeners();
+    updateNavCartCount();
 });
 
 function initializeCart() {
@@ -225,29 +225,50 @@ function clearCart() {
 }
 
 function addToCart(itemName, price) {
-    const newItem = {
-        id: Date.now().toString(),
-        name: itemName,
-        price: price,
-        quantity: 1,
-        subtotal: price
-    };
-
-    cartData.items.push(newItem);
-
+    // Check if item already exists in cart
+    let existing = cartData.items.find(i => i.name === itemName);
+    if (existing) {
+        if (existing.quantity < CONFIG.MAX_QUANTITY) {
+            existing.quantity++;
+            existing.subtotal = existing.price * existing.quantity;
+            showToast(`${itemName} quantity increased!`, 'success');
+        } else {
+            showToast(`Maximum quantity (${CONFIG.MAX_QUANTITY}) reached!`, 'warning');
+            return;
+        }
+    } else {
+        const newItem = {
+            id: Date.now().toString(),
+            name: itemName,
+            price: price,
+            quantity: 1,
+            subtotal: price
+        };
+        cartData.items.push(newItem);
+        showToast(`${itemName} added to cart!`, 'success');
+    }
     calculateTotals();
     updateCartDisplay();
     saveCartToStorage();
-
-    showToast(`${itemName} added to cart!`, 'success');
+    updateNavCartCount();
 }
 
-function showEmptyCart() {
-    const emptyMessage = document.getElementById('empty-cart-message');
-    const container = document.getElementById('cart-items-container');
-
-    if (container) container.style.display = 'none';
-    if (emptyMessage) emptyMessage.style.display = 'flex';
+// Update cart count in navigation bar
+function updateNavCartCount() {
+    let navCart = document.querySelector('.nav-menu .cart-count');
+    if (!navCart) {
+        // Add cart count span if not present
+        let cartLink = document.querySelector('.nav-menu a[href="cart.html"]');
+        if (cartLink) {
+            navCart = document.createElement('span');
+            navCart.className = 'cart-count';
+            cartLink.appendChild(navCart);
+        }
+    }
+    if (navCart) {
+        const totalItems = cartData.items.reduce((sum, item) => sum + item.quantity, 0);
+        navCart.textContent = totalItems > 0 ? ` (${totalItems})` : '';
+    }
 }
 
 // ========================================
