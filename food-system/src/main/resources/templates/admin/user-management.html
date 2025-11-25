@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management - FoodHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #e63946;
+            --primary-dark: #2b2d42;
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        .shape1 {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape2 {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: -50px;
+            animation-delay: 5s;
+        }
+
+        .shape3 {
+            width: 150px;
+            height: 150px;
+            bottom: -50px;
+            left: 30%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 280px;
+            z-index: 1000;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar .logo {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-weight: bold;
+            color: var(--primary-red);
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .sidebar .nav-link {
+            padding: 15px 25px;
+            color: var(--primary-dark);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            margin: 5px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(230, 57, 70, 0.1);
+            color: var(--primary-red);
+            border-left-color: var(--primary-red);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link i {
+            width: 25px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stats-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+
+        .customer-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+            text-align: center;
+            height: 100%;
+        }
+
+        .customer-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .table-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-dark), #1a1b2d);
+            color: white;
+        }
+
+        .table thead th {
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #f1f3f4;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red), #c1121f);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #c1121f, #a4161a);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-red);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            color: #6c757d;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-warning {
+            border: 2px solid #ffc107;
+            color: #856404;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-warning:hover {
+            background: #ffc107;
+            color: black;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-success {
+            border: 2px solid #28a745;
+            color: #28a745;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-success:hover {
+            background: #28a745;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-info {
+            border: 2px solid #17a2b8;
+            color: #17a2b8;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-info:hover {
+            background: #17a2b8;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-danger {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+        }
+
+        .customer-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar .logo span,
+            .sidebar .nav-link span {
+                display: none;
+            }
+
+            .sidebar .nav-link {
+                text-align: center;
+                padding: 15px 10px;
+            }
+
+            .sidebar .nav-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="bg-shape shape3"></div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <i class="fas fa-utensils"></i> FoodHub Admin
+    </div>
+    <nav class="nav flex-column">
+        <a class="nav-link" href="/admin/dashboard">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="/admin/menu">
+            <i class="fas fa-utensils"></i> <span>Menu Management</span>
+        </a>
+        <a class="nav-link" href="/admin/orders">
+            <i class="fas fa-shopping-bag"></i> <span>Orders</span>
+        </a>
+        <a class="nav-link active" href="/admin/users">
+            <i class="fas fa-users"></i> <span>Customers</span>
+        </a>
+        <a class="nav-link" href="/logout">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1" style="color: var(--primary-dark);">Customer Management</h2>
+                <p class="text-muted mb-0">Manage customer relationships and insights</p>
+            </div>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control" placeholder="Search customers..." style="width: 300px;">
+                <button class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i> Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${totalCustomers}">0</div>
+                <div class="text-muted">Total Customers</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${activeCustomers}">0</div>
+                <div class="text-muted">Active This Month</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${newCustomers}">0</div>
+                <div class="text-muted">New This Week</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-number" th:text="${retentionRate}">0%</div>
+                <div class="text-muted">Retention Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Segments -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="customer-card">
+                <div class="text-warning mb-3">
+                    <i class="fas fa-crown fa-3x"></i>
+                </div>
+                <h5>VIP Customers</h5>
+                <div class="stats-number">247</div>
+                <p class="text-muted mb-3">High-value customers</p>
+                <button class="btn btn-outline-warning btn-sm">
+                    <i class="fas fa-eye me-1"></i> View All
+                </button>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="customer-card">
+                <div class="text-success mb-3">
+                    <i class="fas fa-star fa-3x"></i>
+                </div>
+                <h5>Regulars</h5>
+                <div class="stats-number">1,842</div>
+                <p class="text-muted mb-3">Frequent orders</p>
+                <button class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-eye me-1"></i> View All
+                </button>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="customer-card">
+                <div class="text-info mb-3">
+                    <i class="fas fa-user-plus fa-3x"></i>
+                </div>
+                <h5>New Customers</h5>
+                <div class="stats-number">568</div>
+                <p class="text-muted mb-3">Joined recently</p>
+                <button class="btn btn-outline-info btn-sm">
+                    <i class="fas fa-eye me-1"></i> View All
+                </button>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="customer-card">
+                <div class="text-danger mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                </div>
+                <h5>Inactive</h5>
+                <div class="stats-number">324</div>
+                <p class="text-muted mb-3">No orders in 30+ days</p>
+                <button class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-eye me-1"></i> View All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="table-card">
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" style="color: var(--primary-dark);">
+                <i class="fas fa-users me-2"></i>All Customers
+            </h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" style="width: auto;">
+                    <option>All Customers</option>
+                    <option>VIP</option>
+                    <option>Regular</option>
+                    <option>New</option>
+                    <option>Inactive</option>
+                </select>
+                <button class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-download me-2"></i> Export
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Orders</th>
+                    <th>Total Spent</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="customer-avatar me-3">
+                                <span th:text="${user.username.substring(0, 1).toUpperCase()}">J</span>
+                            </div>
+                            <div>
+                                <div class="fw-bold" th:text="${user.username}">John Doe</div>
+                                <small class="text-muted" th:text="'ID: ' + ${user.id}">ID: 1001</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td th:text="${user.email}">john@example.com</td>
+                    <td th:text="${user.phone ?: 'N/A'}">+1 234 567 8900</td>
+                    <td>
+                        <span class="badge bg-light text-dark" th:text="${user.orderCount ?: '0'}">12 orders</span>
+                    </td>
+                    <td th:text="${user.totalSpent != null} ? ('$' + ${#numbers.formatDecimal(user.totalSpent, 1, 2)}) : '$0.00'">$245.50</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                            <button class="btn btn-outline-info">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
