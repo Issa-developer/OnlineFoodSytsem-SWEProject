@@ -1,3 +1,5 @@
+package controllers;
+
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,13 +11,15 @@ public class CheckoutController {
     @PostMapping("/proceed")
     public Map<String, Object> proceedToCheckout(@RequestBody Map<String, Object> checkoutData) {
 
+        // Expected:
+        // user_id
+        // total
+        // items: [ { menu_item_id, quantity, price } ]
+
         Map<String, Object> res = new HashMap<>();
         res.put("status", "success");
         res.put("message", "Checkout started");
-        res.put("data", checkoutData);
-
-        // TODO: Save order into database
-        // TODO: Redirect to payment processor or order summary
+        res.put("order_received", checkoutData);
 
         return res;
     }

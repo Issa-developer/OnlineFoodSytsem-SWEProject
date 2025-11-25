@@ -1,3 +1,5 @@
+package controllers;
+
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,35 +11,45 @@ public class CartController {
     @PostMapping("/add")
     public Map<String, Object> addItem(@RequestBody Map<String, Object> item) {
         Map<String, Object> res = new HashMap<>();
+
+        // Expected fields based on SQL structure
+        // menu_item_id
+        // quantity
+        // price
+
+        // No DB implementation yet, just matching structure
         res.put("status", "success");
         res.put("message", "Item added to cart");
-        res.put("data", item);
+        res.put("data", Map.of(
+                "menu_item_id", item.get("menu_item_id"),
+                "quantity", item.get("quantity"),
+                "price", item.get("price")
+        ));
 
-        // TODO: Insert item into DB (if using SQL)
         return res;
     }
 
     @PostMapping("/update")
     public Map<String, Object> updateQuantity(@RequestBody Map<String, Object> data) {
         Map<String, Object> res = new HashMap<>();
+
+        // Expected fields: order_item_id, quantity
         res.put("status", "success");
         res.put("message", "Quantity updated");
         res.put("data", data);
 
-        // TODO: Update cart quantity in DB
         return res;
     }
 
     @PostMapping("/remove")
     public Map<String, Object> removeItem(@RequestBody Map<String, Object> body) {
-        String itemId = body.get("itemId").toString();
-
         Map<String, Object> res = new HashMap<>();
+
+        // Expected field: order_item_id
         res.put("status", "success");
         res.put("message", "Item removed");
-        res.put("itemId", itemId);
+        res.put("order_item_id", body.get("order_item_id"));
 
-        // TODO: Remove from DB
         return res;
     }
 
@@ -47,7 +59,6 @@ public class CartController {
         res.put("status", "success");
         res.put("message", "Cart cleared");
 
-        // TODO: Delete all cart items from DB
         return res;
     }
 }
